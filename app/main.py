@@ -4,15 +4,10 @@ from processor import Processor
 
 # store users in hash
 # {
-
 # 'Tom': {'card_number': '4111111111111111', 'balance': 1000, 'limit': 2000}
 # 'Lisa': {'card_number': '4111111111111111', 'balance': 1000, 'limit': 2000}
-
 # }
 #
-
-db = {}
-
 
 def main():
 
@@ -27,8 +22,7 @@ def main():
     """.replace('\n', ' ').strip()
 
     events = re.split(r'\s(?=(?:Add|Charge|Credit)\b)', input)
-    processor = Processor(db)
-
+    processor = Processor()
     for e in events:
         processor.parse_event(e)
 
