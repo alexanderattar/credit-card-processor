@@ -39,7 +39,7 @@ class Processor(object):
         If number is not dollar amount it should be a credit card number and should be left as string.
         Raises ValueError if number contains non-numeric characters besides the $ sign.
         """
-        if not re.match(r'[$+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?', number):
+        if not re.match(r'[$+-]?(\d+(\.\d*)?|\.\d+)', number):
             raise ValueError('Number must be numeric')
         if '$' in number:
             return Decimal(number.strip('$'))
