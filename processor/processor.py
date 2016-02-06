@@ -1,13 +1,10 @@
-import sys
-import logging
+import re
 from decimal import Decimal
 
-log = logging.getLogger(__name__)
-out_hdlr = logging.StreamHandler(sys.stdout)
-out_hdlr.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-out_hdlr.setLevel(logging.INFO)
-log.addHandler(out_hdlr)
-log.setLevel(logging.INFO)
+from processor.exceptions import ParseError
+from processor.utils import setup_logger
+
+log = setup_logger()
 
 
 class Processor(object):
@@ -16,19 +13,38 @@ class Processor(object):
         self.db = {}
 
     def parse_event(self, event):
+        event_type, name, *numbers = event.split()
 
-        try:  # to parse event
-            event_type, name, *args = event.split()
-        except Exception as e:
-            raise Exception('ParseError: {0}'.format(str(e)))
+        if not numbers:
+            raise ParseError((
+                'Processor requires event_type, name,'
+                'and additional method args: {0}'.format(numbers)
+            ))
 
+        # strip $ signs from amounts
+        args = map(self.parse_dollars, numbers)
+
+        # call processor method via the event type
         method = getattr(self, event_type.lower())
         method(name, *args)
 
     @staticmethod
-    def parse_dollars(amount):
-        if '$' in amount:
-            return Decimal(amount.strip('$'))
+    def parse_dollars(number):
+        """
+        :param number - must be numeric string, but can contain $ sign.
+
+        If number is dollar amount, strip $ sign and cast to Decimal
+        so balance can be mutated via mathmatical operations.
+
+        If number is not dollar amount it should be a credit card number and should be left as string.
+        Raises ValueError if number contains non-numeric characters besides the $ sign.
+        """
+        if not re.match(r'[$+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?', number):
+            raise ValueError('Number must be numeric')
+        if '$' in number:
+            return Decimal(number.strip('$'))
+        else:
+            return number
 
     @staticmethod
     def luhn_checksum(card_number):
@@ -56,19 +72,20 @@ class Processor(object):
         else:
             balance = 'error'
 
-        self.db[name] = {'card_number': card_number, 'limit': self.parse_dollars(limit), 'balance': balance}
+        self.db[name] = {'card_number': card_number, 'limit': limit, 'balance': balance}
 
     def charge(self, name, amount):
         log.info('Charging {0} {1}'.format(name, amount))
+
         account = self.db.get(name, None)
         balance = account.get('balance', None)
-        card_number = account.get('card_number')
+        card_number = account.get('card_number', None)
         limit = account.get('limit', None)
 
-        if self.parse_dollars(amount) + balance > limit or not self.is_luhn_valid(card_number):
+        if amount + balance > limit or not self.is_luhn_valid(card_number):
             return
 
-        account['balance'] += self.parse_dollars(amount)
+        account['balance'] += amount
 
     def credit(self, name, amount):
         log.info('Crediting {0} {1}'.format(name, amount))
@@ -79,7 +96,7 @@ class Processor(object):
             return
 
         account = self.db.get(name, None)
-        account['balance'] -= self.parse_dollars(amount)
+        account['balance'] -= amount
 
     def write_output(self):
         for key in sorted(self.db.keys()):

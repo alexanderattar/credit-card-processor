@@ -1,6 +1,7 @@
 import re
 
-from processor import Processor
+from processor.processor import Processor
+
 
 # store users in hash
 # {
@@ -8,6 +9,7 @@ from processor import Processor
 # 'Lisa': {'card_number': '4111111111111111', 'balance': 1000, 'limit': 2000}
 # }
 #
+
 
 def main():
 
@@ -23,6 +25,7 @@ def main():
 
     events = re.split(r'\s(?=(?:Add|Charge|Credit)\b)', input)
     processor = Processor()
+
     for e in events:
         processor.parse_event(e)
 
