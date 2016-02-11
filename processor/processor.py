@@ -1,10 +1,11 @@
 import re
+import sys
 from decimal import Decimal
 
 from processor.exceptions import ParseError
 from processor.utils import setup_logger
 
-log = setup_logger()
+log = setup_logger('logger')
 
 
 class Processor(object):
@@ -14,10 +15,16 @@ class Processor(object):
         Initialize the Processor instance with a structure to contain data.
         A preexisting database can be passed in the kwargs opening up the possibility
         for Processors to be instantiated as workers.
+
+        Accounts are stores in a hash in the format:
+        {
+            'Tom': {'card_number': '4111111111111111', 'balance': 1000, 'limit': 2000}
+            'Lisa': {'card_number': '4111111111111111', 'balance': 1000, 'limit': 2000}
+        }
         """
         self.db = kwargs.get('db', {})
         if not isinstance(self.db, dict):
-            raise TypeError('Database must be dictionary (hash-table)')
+            raise TypeError('Database must be dictionary')
 
     def parse_event(self, event):
         """
@@ -67,6 +74,11 @@ class Processor(object):
 
     @staticmethod
     def check_amount(amount):
+        """
+        Helper method to validate amount is of type Decimal
+
+        :param amount - Decimal
+        """
         if not isinstance(amount, Decimal):
             raise TypeError((
                 'Invalid parameter type(s) - '
@@ -77,8 +89,9 @@ class Processor(object):
     def luhn_checksum(card_number):
         """
         Python implementation of Luhn algorithm.
-
         https://en.wikipedia.org/wiki/Luhn_algorithm
+
+        :param card_number - string
         """
         def digits_of(n):
             return [int(d) for d in str(n)]
@@ -92,7 +105,11 @@ class Processor(object):
         return checksum % 10
 
     def is_luhn_valid(self, card_number):
-        """Test card number with Luhn algorithm."""
+        """
+        Test card number with Luhn algorithm.
+
+        :param card_number - string
+        """
         return self.luhn_checksum(card_number) == 0
 
     def add(self, name, card_number, limit):
@@ -115,6 +132,11 @@ class Processor(object):
         self.db[name] = {'card_number': card_number, 'limit': limit, 'balance': balance}
 
     def get_account_details(self, name):
+        """
+        Abstracts logic for retrieving an account and it's data from the db.
+        Exception handling is built in for missing accounts or data required
+        to perform processor actions such as charging and crediting.
+        """
 
         try:  # to get account
             account = self.db[name]
@@ -153,8 +175,8 @@ class Processor(object):
         self.check_amount(amount)
         account, balance, card_number, limit = self.get_account_details(name)
 
-        # fast fails if card is not valid so we don't
-        # compare decimal amounts with str for error balances
+        # fast fails if card is not valid so we don't end up
+        # comparing decimal amounts with str for error balances
         if not self.is_luhn_valid(card_number) or amount + balance > limit:
             return balance
 
@@ -179,11 +201,29 @@ class Processor(object):
         account = self.db.get(name, None)
         account['balance'] -= amount
 
-    def write_output(self):
-        log.info('\n\n==================== [SUMMARY] ====================')
+    def generate_summary(self):
+        """
+        Generates the summary string in preparation for output.
+        Formats the summary in alphabetical order by name.
+        Appends a $ to dollar values and not to accounts in error.
+        Each summary line ends with a \n
+        """
+        summary = ''
         for key in sorted(self.db.keys()):
-            balance = '${0}'.format(self.db[key].get('balance')) \
-                if not self.db[key].get('balance') == 'error' \
-                else self.db[key].get('balance')
+            balance = '${0}'.format(self.db[key].get('balance'))
 
-            log.info('%s: %s' % (key, balance))
+            if 'error' in balance:
+                balance = balance.strip('$')
+
+            summary += '{0}: {1}\n'.format(key, balance)
+        return summary
+
+    @staticmethod
+    def write_output(summary):
+        """
+        Simple wrapper method for writing output to stout.
+        It can be easily extended to write to file.
+
+        :param summary - string
+        """
+        sys.stdout.write(summary)

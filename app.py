@@ -1,17 +1,14 @@
 import re
+from time import process_time
 
 from processor.processor import Processor
+from processor.utils import setup_logger
 
-
-# store users in hash
-# {
-# 'Tom': {'card_number': '4111111111111111', 'balance': 1000, 'limit': 2000}
-# 'Lisa': {'card_number': '4111111111111111', 'balance': 1000, 'limit': 2000}
-# }
-#
+log = setup_logger('logger')
 
 
 def main():
+    t = process_time()
 
     input = """ Add Tom 4111111111111111 $1000
     Add Lisa 5454545454545454 $3000
@@ -29,7 +26,14 @@ def main():
     for e in events:
         processor.parse_event(e)
 
-    processor.write_output()
+    log.info((
+        'Finished processing in {0:.3f} seconds\n\n'
+        '==================== [SUMMARY] ===================='.format(
+            process_time() - t)
+    ))
+
+    summary = processor.generate_summary()
+    processor.write_output(summary)
 
 if __name__ == "__main__":
     main()

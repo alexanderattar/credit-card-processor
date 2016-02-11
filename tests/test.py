@@ -53,7 +53,7 @@ class TestProcessor(unittest.TestCase):
         self.processor.add('User', '4111111111111111', '$4000')
         self.assertIsInstance(self.processor.db['User']['balance'], Decimal)
 
-    # charge
+    # get account
     def test_nonexistant_account_name_raises_key_error(self):
         self.assertRaises(KeyError, self.processor.get_account_details, 'Non-Existent account')
 
@@ -61,6 +61,7 @@ class TestProcessor(unittest.TestCase):
         self.processor.db['User'] = {'card_number': '4111111111111111', 'limit': '$5000', 'balance': None}
         self.assertRaises(KeyError, self.processor.get_account_details, 'User')
 
+    # charge
     def test_charge_with_bad_params_raises_type_error(self):
         self.processor.db['User'] = {
             'card_number': '4111111111111111', 'limit': Decimal('9000'), 'balance': Decimal('9000')
@@ -76,6 +77,17 @@ class TestProcessor(unittest.TestCase):
     def test_invalid_card_is_not_charged(self):
         self.processor.add('User', '1234567890123456', Decimal('9000'))
         self.assertEqual(self.processor.charge('User', Decimal('1')), 'error')
+
+    # credit
+    def test_credit_with_bad_params_raises_type_error(self):
+        self.processor.db['User'] = {
+            'card_number': '4111111111111111', 'limit': Decimal('9000'), 'balance': Decimal('9000')
+        }
+        self.assertRaises(TypeError, self.processor.credit, 'User', '$1000')
+
+    def test_invalid_card_is_not_credited(self):
+        self.processor.add('User', '1234567890123456', Decimal('9000'))
+        self.assertEqual(self.processor.credit('User', Decimal('1')), 'error')
 
 
 if __name__ == '__main__':
