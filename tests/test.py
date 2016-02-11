@@ -13,6 +13,9 @@ class TestProcessor(unittest.TestCase):
     def setUp(self):
         self.processor = Processor()
 
+    def test_event_is_string(self):
+        self.assertRaises(ValueError, self.processor.parse_event, 0)
+
     def test_parse_event_can_upack_string(self):
         self.assertRaises(ValueError, self.processor.parse_event, 'Add')
 
@@ -41,6 +44,10 @@ class TestProcessor(unittest.TestCase):
     def test_balance_type_is_decimal(self):
         self.processor.add('name', '4111111111111111', '$4000')
         self.assertIsInstance(self.processor.db['name']['balance'], decimal.Decimal)
+
+    def test_nonexistant_account_name_raises_key_error(self):
+        self.processor.db = {}  # empty the db so account definitely will not exist
+        self.assertRaises(KeyError, self.processor.charge, 'Non-Existent account', '$1000')
 
 
 if __name__ == '__main__':
