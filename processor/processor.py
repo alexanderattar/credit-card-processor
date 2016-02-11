@@ -10,7 +10,14 @@ log = setup_logger()
 class Processor(object):
 
     def __init__(self, *args, **kwargs):
-        self.db = {}
+        """
+        Initialize the Processor instance with a structure to contain data.
+        A preexisting database can be passed in the kwargs opening up the possibility
+        for Processors to be instantiated as workers.
+        """
+        self.db = kwargs.get('db', {})
+        if not isinstance(self.db, dict):
+            raise TypeError('Database must be dictionary (hash-table)')
 
     def parse_event(self, event):
         """
@@ -59,6 +66,14 @@ class Processor(object):
             return number
 
     @staticmethod
+    def check_amount(amount):
+        if not isinstance(amount, Decimal):
+            raise TypeError((
+                'Invalid parameter type(s) - '
+                'amount={0} must be Decimal'.format(type(amount))
+            ))
+
+    @staticmethod
     def luhn_checksum(card_number):
         """
         Python implementation of Luhn algorithm.
@@ -81,6 +96,14 @@ class Processor(object):
         return self.luhn_checksum(card_number) == 0
 
     def add(self, name, card_number, limit):
+        """
+        Add a new credit card to the database.
+        Checks is card number is valid with Luhn check
+
+        :param name - string
+        :param card_number - string
+        :param limit - Decimal
+        """
         log.info('Adding credit card {0} for {1} with {2} limit'.format(card_number, name, limit))
 
         if self.is_luhn_valid(card_number):
@@ -91,44 +114,76 @@ class Processor(object):
 
         self.db[name] = {'card_number': card_number, 'limit': limit, 'balance': balance}
 
-    def charge(self, name, amount):
-        log.info('Charging {0} {1}'.format(name, amount))
+    def get_account_details(self, name):
 
-        try:
+        try:  # to get account
             account = self.db[name]
         except KeyError as e:
             log.error('Account doesn\'t exist')
             raise
+
+        if not isinstance(name, str):
+            raise TypeError((
+                'Invalid parameter type(s) - '
+                'name={0} must be str and'.format(type(name), type(amount))
+            ))
 
         balance = account.get('balance', None)
         card_number = account.get('card_number', None)
         limit = account.get('limit', None)
 
         # check for missing params
-        if any(v is None for v in [balance, card_number, limit]):
+        if any(param is None for param in [balance, card_number, limit]):
             raise KeyError((
                 'Missing parameter(s) required for processing charge - '
                 'balance={0} card_number={1} limit={2}'.format(balance, card_number, limit)
             ))
 
-        if amount + balance > limit or not self.is_luhn_valid(card_number):
-            return
+        return account, balance, card_number, limit
+
+    def charge(self, name, amount):
+        """
+        Charge account associated with the name a certain amount.
+        Checks is card number is valid with Luhn check
+
+        :param name - string
+        :param amount - Decimal
+        """
+        log.info('Charging {0} {1}'.format(name, amount))
+        self.check_amount(amount)
+        account, balance, card_number, limit = self.get_account_details(name)
+
+        # fast fails if card is not valid so we don't
+        # compare decimal amounts with str for error balances
+        if not self.is_luhn_valid(card_number) or amount + balance > limit:
+            return balance
 
         account['balance'] += amount
 
     def credit(self, name, amount):
+        """
+        Credit account associated with the name a certain amount.
+        Checks is card number is valid with Luhn check
+
+        :param name - string
+        :param amount - Decimal
+        """
         log.info('Crediting {0} {1}'.format(name, amount))
-        account = self.db.get(name, None)
-        card_number = account.get('card_number')
+        self.check_amount(amount)
+
+        account, balance, card_number, limit = self.get_account_details(name)
 
         if not self.is_luhn_valid(card_number):
-            return
+            return balance
 
         account = self.db.get(name, None)
         account['balance'] -= amount
 
     def write_output(self):
-        log.info('\n\n=============== [SUMMARY] ===============')
+        log.info('\n\n==================== [SUMMARY] ====================')
         for key in sorted(self.db.keys()):
-            balance = '${0}'.format(self.db[key].get('balance')) if not self.db[key].get('balance') == 'error' else self.db[key].get('balance')
+            balance = '${0}'.format(self.db[key].get('balance')) \
+                if not self.db[key].get('balance') == 'error' \
+                else self.db[key].get('balance')
+
             log.info('%s: %s' % (key, balance))
