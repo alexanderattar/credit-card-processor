@@ -13,11 +13,6 @@ class TestProcessor(unittest.TestCase):
     def setUp(self):
         self.processor = Processor()
 
-    # TODO
-    # def test_setup_with_invalid_database(self):
-    #     self.processor.db = []
-    #     self.assertRaises(TypeError, self.processor.__init__(db=[]))
-
     # event parsing
     def test_event_is_string(self):
         self.assertRaises(ValueError, self.processor.parse_event, 0)
@@ -77,6 +72,10 @@ class TestProcessor(unittest.TestCase):
     def test_invalid_card_is_not_charged(self):
         self.processor.add('User', '1234567890123456', Decimal('9000'))
         self.assertEqual(self.processor.charge('User', Decimal('1')), 'error')
+
+    def test_credit_correctly_decreases_balance(self):
+        self.processor.add('User', '4111111111111111', Decimal('9000'))
+        self.processor.credit('User', Decimal())
 
     # credit
     def test_credit_with_bad_params_raises_type_error(self):
