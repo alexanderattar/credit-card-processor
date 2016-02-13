@@ -1,17 +1,18 @@
-# Credit Card Processing
+# Basic Credit Card Processing
 -----
 
 This application is rudimentry credit card processor.
 The program can add new credit card accounts, process charges and credits
 against them, and display summary information.
 rt
+
 ## Requirements
 
 Python >= 3.5
 
 ## Usage
 
-###Running the appication
+### Running the appication
 
 
 The application accepts input from two types of sources:
@@ -30,7 +31,7 @@ python3 app.py input.txt
 python3 < input.txt
 ```
 
-###Running tests
+### Running tests
 
 
 The simplest way to run unit test is to use Python's stdlib
