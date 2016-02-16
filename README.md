@@ -70,7 +70,7 @@ Processor objects are instantiated with a dictionary or hash-table for storing t
 }
 ```
 
-In this contrived example accounts lookups are performed by using the person’s first name as the primary key. This design clearly is over-simplified for a real-world solution where many accounts could be owned by people with the same first name, in which case, a unique identifier such as the card number a surrogate key should be used.
+In this contrived example account lookups are performed by using the person’s first name as the primary key. This design clearly is over-simplified for a real-world solution where many accounts could be owned by people with the same first name, in which case, a unique identifier such as the card number or a surrogate key should be used.
 
 Processor can read input from a file via command-line arguments or STDIN. Input is parsed into separate events that contain the type of action to perform and the account to perform them on. Input is read and the events are parsed and then forwarded to the Processor methods designed to handle each action. Parameters for each method are extracted by unpacking the variables in each space delimited event, and then passed to the appropriate method via the event type. This design allows all the actions to be called through the same interface rather than having to check the type of each event before sending to the appropriate method. 
 
