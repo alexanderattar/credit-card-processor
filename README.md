@@ -57,11 +57,6 @@ nosetests --with-coverage
 
 ## Design Overview
 
-- An overview of your design decisions
-- Why you picked the programming language you used
-- How to run your code and tests, including how to install any dependencies
-your code may have.
-
 The application features a central Processor class that contains the logic to perform the actions laid out in the project description requirements. This includes the input commands described: "Add", "Charge", and "Credit", but additionally the class possesses methods for reading, and parsing input, as well as writing the output summary after all input has been processed. 
 
 The credit card processor is modular by design. The functionality has been abstracted into small methods that each perform an action that can quickly be grasped by the method definition, and the docstrings provided. This design makes the application very readable, as well as maintainable. Additionally, because the Processor class includes all the logic required to accept input and process the output, it creates the opportunity for Processor objects to be instantiated as workers to scale for larger datasets.
@@ -70,8 +65,8 @@ Processor objects are instantiated with a dictionary or hash table for storing t
 
 ```
 {
-'Tom': {'card_number': '4111111111111111', 'balance': 1000, 'limit': 2000}
-'Lisa': {'card_number': '4111111111111111', 'balance': 1000, 'limit': 2000}
+"Tom": {"card_number": "4111111111111111", "balance": 1000, "limit": 2000}
+"Lisa": {"card_number": "4111111111111111", "balance": 1000, "limit": 2000}
 }
 ```
 
@@ -91,4 +86,4 @@ Unit tests are included to accompany the application. The tests are organized to
 
 For this application, I chose to use Python. Python is powerful, flexible and open-source. It has a very simple syntax, which makes it easy to read, and to maintain. Python is fast, and highly scalable for massive web applications; for example much of Google's infastructure is built on top of it.
 
-Python features an extensive standard library, offering a wide range of facilities, enabling me to write all the logic for this credit card processor without the use of any third-party dependencies. Furthermore, the Python interpreter, makes the development process fast, and allowed me to quickly sketch out funcionality, and interate on my design decisions.
+Python features an extensive standard library, offering a wide range of facilities, enabling me to write all the logic for this credit card processor without the use of any third-party dependencies. Furthermore, the Python interpreter, makes the development process fast, and allowed me to quickly sketch out funcionality, and interate on my design decisions. I specifically took this as an opportunity to use the latest version of Python (3.5) for this project. Regardless of the slow adoption in the community, I embrace the advantages introduced in Python 3+, and I am excited for the potential of integrating new features such as concurrency with asyncio, and type annotations.
