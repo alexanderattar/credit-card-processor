@@ -34,7 +34,7 @@ python3 app.py < input.txt
 ### Running tests
 
 
-The simplest way to run unit test is to use Python's stdlib
+The simplest way to run unit tests is to use Python's stdlib
 [unittest test discovery](https://docs.python.org/3/library/unittest.html#test-discovery)
 
 ```
