@@ -25,22 +25,6 @@ class Processor(object):
         if not isinstance(self.db, dict):
             raise TypeError('Database must be dictionary')
 
-    @staticmethod
-    def read_input():
-        """
-        Accept input from two types of sources:
-            - a filename passed in command line arguments or STDIN.
-        Parses the input into discrete events
-
-        Usage:
-          'python3 app.py input.txt' or 'python3 < input.txt'
-        """
-        with open(sys.argv[1], 'r') if len(sys.argv) > 1 else sys.stdin as f:
-            input = f.read().replace('\n', ' ').strip()
-            events = re.split(r'\s(?=(?:Add|Charge|Credit)\b)', input)
-            f.close()
-        return events
-
     def parse_event(self, event):
         """
         Parse event string into event components and passes them as parameters
@@ -223,7 +207,7 @@ class Processor(object):
         Appends a $ to dollar values and not to accounts in error.
         Each summary line ends with a \n
         """
-        summary = '\n\n==================== [SUMMARY] ====================\n'
+        summary = ''
         for key in sorted(self.db.keys()):
             balance = '${0}'.format(self.db[key].get('balance'))
 

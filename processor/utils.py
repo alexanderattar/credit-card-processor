@@ -1,5 +1,3 @@
-
-import sys
 import logging
 
 LOGGER_DISABLED = False  # convenience for testing
@@ -13,7 +11,7 @@ def setup_logger(name):
         return loggers.get(name)
     else:
         log = logging.getLogger(name)
-        hdlr = logging.StreamHandler(sys.stdout)
+        hdlr = logging.FileHandler('/var/log/tmp/credit-card-processor.log')
         hdlr.setFormatter(
             logging.Formatter(
                 '%(asctime)s - %(levelname)7s - %(message)s', '%Y-%m-%d %H:%M')
